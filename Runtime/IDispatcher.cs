@@ -34,13 +34,13 @@ namespace CentauriCore.EventDispatcher
         public virtual void PostLateUpdateHandler(float deltaTime) { }
         
         /// <summary>
-        /// Fires when handler targeting this script is added : Fires BEFORE but IN SAME FRAME as first update!
+        /// Fires when handler targeting this script is added : Fires AFTER but IN SAME FRAME as first update!
         /// </summary>
         /// <param name="eventType">PlayerLoop event type added</param>
         public virtual void OnAddHandler(EventDispatcher.EventType eventType) { }
         
         /// <summary>
-        /// Fires when handler targeting this script is removed : Fires AFTER but IN SAME FRAME as its removal!
+        /// Fires when handler targeting this script is removed : Fires BEFORE but IN SAME FRAME as its removal!
         /// </summary>
         /// <param name="eventType">PlayerLoop event type removed</param>
         public virtual void OnRemoveHandler(EventDispatcher.EventType eventType) { }

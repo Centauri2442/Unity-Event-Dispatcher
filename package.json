@@ -2,7 +2,7 @@
 {
   "name": "centauricore.eventdispatcher",
   "displayName": "Event Dispatcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Event Dispatcher allows scripts to dynamically add and remove themselves from a event manager that calls playerloop methods.",
   "unity": "2022.1"
 }

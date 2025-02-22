@@ -43,6 +43,9 @@ namespace CentauriCore.EventDispatcher
 
         private static EventDispatcher _instance;
 
+        /// <summary>
+        /// Singleton Instance of EventDispatcher
+        /// </summary>
         public static EventDispatcher Instance
         {
             get
@@ -79,7 +82,7 @@ namespace CentauriCore.EventDispatcher
         private static MonoBehaviour[] PostLateUpdateInternalScriptRefs = new MonoBehaviour[0]; // We store this ref for null checking
 
 
-        private void Start()
+        private void Awake()
         {
             DontDestroyOnLoad(gameObject);
             
@@ -133,19 +136,17 @@ namespace CentauriCore.EventDispatcher
         /// </summary>
         /// <param name="eventType">PlayerLoop event type</param>
         /// <param name="targetScript">Target script</param>
-        public static void AddHandler(EventType eventType, IDispatcher targetScript)
+        public static void AddHandler<TMonoBehaviour>(EventType eventType, TMonoBehaviour targetScript) where TMonoBehaviour : MonoBehaviour, IDispatcher
         {
-            if (targetScript is MonoBehaviour behaviour)
-            {
-                if(Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Added handler for {behaviour.gameObject.name}!");
-                
-                switch (eventType) // Adds both the interface reference and the monobehaviour reference to the relevant arrays. We'll add monobehaviours so that we can keep track of when to automatically clean up scripts.
+            if(Instance && Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Added handler for {targetScript.gameObject.name}!");
+            
+            switch (eventType) // Adds both the interface reference and the monobehaviour reference to the relevant arrays. We'll add monobehaviours so that we can keep track of when to automatically clean up scripts.
                 {
                     case EventType.Update:
                         if (!UpdateDispatching.Contains(targetScript))
                         {
                             UpdateDispatching = UpdateDispatching.AddUnique(targetScript);
-                            UpdateInternalScriptRefs = UpdateInternalScriptRefs.AddUnique(behaviour);
+                            UpdateInternalScriptRefs = UpdateInternalScriptRefs.AddUnique(targetScript);
                             
                             targetScript.OnAddHandler(eventType);
                             targetScript.UpdateHandler(Time.deltaTime);
@@ -155,7 +156,7 @@ namespace CentauriCore.EventDispatcher
                         if (!LateUpdateDispatching.Contains(targetScript))
                         {
                             LateUpdateDispatching = LateUpdateDispatching.AddUnique(targetScript);
-                            LateUpdateInternalScriptRefs = LateUpdateInternalScriptRefs.AddUnique(behaviour);
+                            LateUpdateInternalScriptRefs = LateUpdateInternalScriptRefs.AddUnique(targetScript);
                             
                             targetScript.OnAddHandler(eventType);
                             targetScript.LateUpdateHandler(Time.deltaTime);
@@ -165,7 +166,7 @@ namespace CentauriCore.EventDispatcher
                         if (!FixedUpdateDispatching.Contains(targetScript))
                         {
                             FixedUpdateDispatching = FixedUpdateDispatching.AddUnique(targetScript);
-                            FixedUpdateInternalScriptRefs = FixedUpdateInternalScriptRefs.AddUnique(behaviour);
+                            FixedUpdateInternalScriptRefs = FixedUpdateInternalScriptRefs.AddUnique(targetScript);
                             
                             targetScript.OnAddHandler(eventType);
                             targetScript.FixedUpdateHandler(Time.fixedDeltaTime);
@@ -175,7 +176,7 @@ namespace CentauriCore.EventDispatcher
                         if (!PostLateUpdateDispatching.Contains(targetScript))
                         {
                             PostLateUpdateDispatching = PostLateUpdateDispatching.AddUnique(targetScript);
-                            PostLateUpdateInternalScriptRefs = PostLateUpdateInternalScriptRefs.AddUnique(behaviour);
+                            PostLateUpdateInternalScriptRefs = PostLateUpdateInternalScriptRefs.AddUnique(targetScript);
                             
                             targetScript.OnAddHandler(eventType);
                             targetScript.PostLateUpdateHandler(Time.deltaTime);
@@ -183,11 +184,7 @@ namespace CentauriCore.EventDispatcher
                         break;
                     
                 }
-            }
-            else
-            {
-                if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour! The event dispatcher currently only supports MonoBehaviours");
-            }
+            
         }
         
         /// <summary>
@@ -195,71 +192,72 @@ namespace CentauriCore.EventDispatcher
         /// </summary>
         /// <param name="eventType">PlayerLoop event type</param>
         /// <param name="targetScript">Target script</param>
-        public static void RemoveHandler(EventType eventType, IDispatcher targetScript)
+        public static void RemoveHandler<TMonoBehaviour>(EventType eventType, TMonoBehaviour targetScript) where TMonoBehaviour : MonoBehaviour, IDispatcher
         {
-            if (targetScript is MonoBehaviour behaviour)
-            {
-                if(Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Removed handler from {behaviour.gameObject.name}!");
+            if(Instance && Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Removed handler from {targetScript.gameObject.name}!");
                 
-                switch (eventType)
-                {
-                    case EventType.Update:
-                        UpdateDispatching = UpdateDispatching.Remove(targetScript);
-                        UpdateInternalScriptRefs = UpdateInternalScriptRefs.Remove(behaviour);
+            switch (eventType)
+            {
+                case EventType.Update:
+                    UpdateDispatching = UpdateDispatching.Remove(targetScript);
+                    UpdateInternalScriptRefs = UpdateInternalScriptRefs.Remove(targetScript);
                         
-                        targetScript.OnRemoveHandler(eventType);
-                        break;
-                    case EventType.LateUpdate:
-                        LateUpdateDispatching = LateUpdateDispatching.Remove(targetScript);
-                        LateUpdateInternalScriptRefs = LateUpdateInternalScriptRefs.Remove(behaviour);
+                    targetScript.OnRemoveHandler(eventType);
+                    break;
+                case EventType.LateUpdate:
+                    LateUpdateDispatching = LateUpdateDispatching.Remove(targetScript);
+                    LateUpdateInternalScriptRefs = LateUpdateInternalScriptRefs.Remove(targetScript);
                         
-                        targetScript.OnRemoveHandler(eventType);
-                        break;
-                    case EventType.FixedUpdate:
-                        FixedUpdateDispatching = FixedUpdateDispatching.Remove(targetScript);
-                        FixedUpdateInternalScriptRefs = FixedUpdateInternalScriptRefs.Remove(behaviour);
+                    targetScript.OnRemoveHandler(eventType);
+                    break;
+                case EventType.FixedUpdate:
+                    FixedUpdateDispatching = FixedUpdateDispatching.Remove(targetScript);
+                    FixedUpdateInternalScriptRefs = FixedUpdateInternalScriptRefs.Remove(targetScript);
                         
-                        targetScript.OnRemoveHandler(eventType);
-                        break;
-                    case EventType.PostLateUpdate:
-                        PostLateUpdateDispatching = PostLateUpdateDispatching.Remove(targetScript);
-                        PostLateUpdateInternalScriptRefs = PostLateUpdateInternalScriptRefs.Remove(behaviour);
+                    targetScript.OnRemoveHandler(eventType);
+                    break;
+                case EventType.PostLateUpdate:
+                    PostLateUpdateDispatching = PostLateUpdateDispatching.Remove(targetScript);
+                    PostLateUpdateInternalScriptRefs = PostLateUpdateInternalScriptRefs.Remove(targetScript);
                         
-                        targetScript.OnRemoveHandler(eventType);
-                        break;
-                }
+                    targetScript.OnRemoveHandler(eventType);
+                    break;
             }
-            else
+        }
+
+        /// <summary>
+        /// Used internally to remove the handler in cases of null refs
+        /// </summary>
+        /// <param name="eventType"></param>
+        /// <param name="index"></param>
+        private static void RemoveHandler(EventType eventType, int index)
+        {
+            switch (eventType)
             {
-                if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour! The event dispatcher currently only supports MonoBehaviours");
-                
-                switch (eventType)
-                {
-                    case EventType.Update:
-                        if (UpdateDispatching.Contains(targetScript))
-                        {
-                            if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour, but has somehow made its way into the <color=yellow>Update</color> dispatcher array!");
-                        }
-                        break;
-                    case EventType.LateUpdate:
-                        if (LateUpdateDispatching.Contains(targetScript))
-                        {
-                            if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour, but has somehow made its way into the <color=yellow>LateUpdate</color> dispatcher array!");
-                        }
-                        break;
-                    case EventType.FixedUpdate:
-                        if (FixedUpdateDispatching.Contains(targetScript))
-                        {
-                            if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour, but has somehow made its way into the <color=yellow>FixedUpdate</color> dispatcher array!");
-                        }
-                        break;
-                    case EventType.PostLateUpdate:
-                        if (PostLateUpdateDispatching.Contains(targetScript))
-                        {
-                            if(Instance.ShowDebugLogs) Debug.LogError($"{DebugLogColors.eventDebugMarker} Target script is not a MonoBehaviour, but has somehow made its way into the <color=yellow>PostLateUpdate</color> dispatcher array!");
-                        }
-                        break;
-                }
+                case EventType.Update:
+                    UpdateDispatching[index].OnRemoveHandler(eventType);
+                    
+                    UpdateDispatching = UpdateDispatching.Remove(UpdateDispatching[index]);
+                    UpdateInternalScriptRefs = UpdateInternalScriptRefs.Remove(UpdateInternalScriptRefs[index]);
+                    break;
+                case EventType.LateUpdate:
+                    LateUpdateDispatching[index].OnRemoveHandler(eventType);
+                    
+                    LateUpdateDispatching = LateUpdateDispatching.Remove(LateUpdateDispatching[index]);
+                    LateUpdateInternalScriptRefs = LateUpdateInternalScriptRefs.Remove(LateUpdateInternalScriptRefs[index]);
+                    break;
+                case EventType.FixedUpdate:
+                    FixedUpdateDispatching[index].OnRemoveHandler(eventType);
+                    
+                    FixedUpdateDispatching = FixedUpdateDispatching.Remove(FixedUpdateDispatching[index]);
+                    FixedUpdateInternalScriptRefs = FixedUpdateInternalScriptRefs.Remove(FixedUpdateInternalScriptRefs[index]);
+                    break;
+                case EventType.PostLateUpdate:
+                    PostLateUpdateDispatching[index].OnRemoveHandler(eventType);
+                    
+                    PostLateUpdateDispatching = PostLateUpdateDispatching.Remove(PostLateUpdateDispatching[index]);
+                    PostLateUpdateInternalScriptRefs = PostLateUpdateInternalScriptRefs.Remove(PostLateUpdateInternalScriptRefs[index]);
+                    break;
             }
         }
 
@@ -269,7 +267,7 @@ namespace CentauriCore.EventDispatcher
         /// <param name="eventType">PlayerLoop event type</param>
         /// <param name="targetScript">Target script</param>
         /// <returns>True if handler found of input event type</returns>
-        public static bool HasHandler(EventType eventType, IDispatcher targetScript)
+        public static bool HasHandler<TMonoBehaviour>(EventType eventType, TMonoBehaviour targetScript) where TMonoBehaviour : MonoBehaviour, IDispatcher
         {
             switch (eventType)
             {
@@ -302,7 +300,7 @@ namespace CentauriCore.EventDispatcher
             {
                 if (!UpdateInternalScriptRefs[i]) // If script is now null (Usually due to scene switching), remove it from the array
                 {
-                    RemoveHandler(EventType.Update, UpdateDispatching[i]);
+                    RemoveHandler(EventType.Update, i);
                     if(ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>Update</color> loop due to null ref!");
                 }
                 else
@@ -320,8 +318,8 @@ namespace CentauriCore.EventDispatcher
             {
                 if (!LateUpdateInternalScriptRefs[i]) // If script is now null (Usually due to scene switching), remove it from the array
                 {
-                    RemoveHandler(EventType.LateUpdate, LateUpdateDispatching[i]);
-                    if(Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>LateUpdate</color> loop due to null ref!");
+                    RemoveHandler(EventType.LateUpdate, i);
+                    if(ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>LateUpdate</color> loop due to null ref!");
                 }
                 else
                 {
@@ -338,8 +336,8 @@ namespace CentauriCore.EventDispatcher
             {
                 if (!FixedUpdateInternalScriptRefs[i]) // If script is now null (Usually due to scene switching), remove it from the array
                 {
-                    RemoveHandler(EventType.FixedUpdate, FixedUpdateDispatching[i]);
-                    if(Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>FixedUpdate</color> loop due to null ref!");
+                    RemoveHandler(EventType.FixedUpdate, i);
+                    if(ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>FixedUpdate</color> loop due to null ref!");
                 }
                 else
                 {
@@ -356,8 +354,8 @@ namespace CentauriCore.EventDispatcher
             {
                 if (!PostLateUpdateInternalScriptRefs[i]) // If script is now null (Usually due to scene switching), remove it from the array
                 {
-                    RemoveHandler(EventType.PostLateUpdate, PostLateUpdateDispatching[i]);
-                    if(Instance.ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>FixedUpdate</color> loop due to null ref!");
+                    RemoveHandler(EventType.PostLateUpdate, i);
+                    if(ShowDebugLogs) Debug.Log($"{DebugLogColors.eventDebugMarker} Script has been removed from <color=yellow>FixedUpdate</color> loop due to null ref!");
                 }
                 else
                 {
